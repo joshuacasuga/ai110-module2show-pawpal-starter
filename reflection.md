@@ -49,13 +49,11 @@ having the program refuse to build a plan.
 
 **a. How you used AI**
 
-- How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
-- What kinds of prompts or questions were most helpful?
+I used AI in a few different ways. Early on it helped me brainstorm the class layout and turn my UML into Python stubs. Later I leaned on it more for the routine work, like drafting the test suite, cleaning up the Streamlit display so it used my Scheduler methods, and writing the README walkthrough. The prompts that worked best were the specific ones where I pointed it at an actual file and asked a narrow question, like "what edge cases should I test for a scheduler with sorting and recurring tasks." Vague questions gave me vague answers.
 
 **b. Judgment and verification**
 
-- Describe one moment where you did not accept an AI suggestion as-is.
-- How did you evaluate or verify what the AI suggested?
+One thing I didn't take as-is was around conflict detection. The suggestion treated it as fully handled, but I noticed it only catches tasks at the exact same start time, not ones that overlap because of how long they take. I kept the simple version for now but wrote down the limitation instead of pretending it was solved. I verified suggestions mostly by running main.py and watching the output, and by running the test suite. If the tests passed and the printed schedule matched what I expected, I trusted it. A couple of times the output didn't line up and I had to go back and fix things.
 
 ---
 
@@ -63,13 +61,11 @@ having the program refuse to build a plan.
 
 **a. What you tested**
 
-- What behaviors did you test?
-- Why were these tests important?
+I focused on the behaviors that make the scheduler actually a scheduler: sorting tasks into chronological order, the recurrence logic that spawns the next instance when you complete a daily or weekly task, and conflict detection flagging two tasks at the same time. I also tested the due-date filtering for each frequency and a couple of edge cases, like a pet with no tasks and two tasks at the exact same time. These mattered because they're the parts most likely to break quietly and the parts the whole daily plan depends on.
 
 **b. Confidence**
 
-- How confident are you that your scheduler works correctly?
-- What edge cases would you test next if you had more time?
+Pretty confident. There are 18 tests and they all pass, and the ones that matter most cover the core logic rather than trivial getters. If I had more time I'd test duration-based overlaps once tasks have a length, monthly tasks on a day like the 31st that not every month has, and behavior around the build_schedule method, which currently drops one task when two share a time slot.
 
 ---
 
@@ -77,12 +73,12 @@ having the program refuse to build a plan.
 
 **a. What went well**
 
-- What part of this project are you most satisfied with?
+I'm most satisfied with how cleanly the responsibilities split across the classes. The Owner holds pets, the Pet holds its tasks, the Task knows its own recurrence rules, and the Scheduler just reads from the owner and arranges things. Because of that, adding features like filtering by pet or status was easy and didn't tangle anything up.
 
 **b. What you would improve**
 
-- If you had another iteration, what would you improve or redesign?
+The big one is giving tasks a duration so the scheduler can detect real overlaps instead of only exact start-time clashes. I'd also fix build_schedule so it doesn't silently drop a task when two share a time, and probably add task priority so the plan can reflect what matters most when the day is full.
 
 **c. Key takeaway**
 
-- What is one important thing you learned about designing systems or working with AI on this project?
+Designing the classes first, before writing logic, made the whole build smoother because I already knew where each piece lived. And working with AI, the lesson was that it's only as good as how specific I am and how carefully I check the output, treating it as a fast first draft rather than a final answer.

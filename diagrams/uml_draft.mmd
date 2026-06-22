@@ -19,6 +19,7 @@ classDiagram
         -List~Task~ tasks
         +addTask(Task task) void
         +removeTask(Task task) void
+        +markTaskComplete(Task task) Task
         +getTasks() List~Task~
         +getInfo() String
     }
@@ -31,6 +32,7 @@ classDiagram
         -boolean isComplete
         +markComplete() void
         +markIncomplete() void
+        +nextOccurrence() Task
         +reschedule(LocalDate date, LocalTime time) void
         +isDue(LocalDate date) boolean
     }
@@ -39,14 +41,18 @@ classDiagram
         -Owner owner
         +generateDailyPlan(LocalDate date) List~Task~
         +gatherTasks() List~Task~
-        +sortTasks(List~Task~ tasks) List~Task~
+        +sortByTime(List~Task~ tasks) List~Task~
         +filterTasks(List~Task~ tasks, LocalDate date) List~Task~
+        +filterByStatus(List~Task~ tasks, boolean isComplete) List~Task~
+        +filterByPet(String petName) List~Task~
         +detectConflicts(List~Task~ tasks) List~Task~
+        +conflictWarnings(List~Task~ tasks) List~String~
         +buildSchedule() Map~LocalTime, Task~
     }
 
     Owner "1" *-- "0..*" Pet : has
     Pet "1" *-- "0..*" Task : assigned
+    Pet ..> Task : creates
     Scheduler "1" --> "1" Owner : reads from
     Scheduler ..> Task : organizes
     Scheduler ..> Pet : gathers from

@@ -90,15 +90,27 @@ else:
         pet.add_task(Task(task_title, task_time, date.today(), frequency))
         st.success(f"Added '{task_title}' for {pet.name}.")
 
-# Show every pet's current tasks straight from the model.
+# Show every pet's current tasks, sorted via the Scheduler and rendered as a table.
 if pets:
+    scheduler = Scheduler(owner)
     st.write("Current pets and tasks:")
     for pet in pets:
         st.markdown(f"**{pet.get_info()}**")
-        if pet.get_tasks():
-            for t in pet.get_tasks():
-                status = "done" if t.is_complete else "pending"
-                st.write(f"- {t.time:%I:%M %p} — {t.description} ({t.frequency}, {status})")
+        # Pull this pet's tasks through the Scheduler so the UI reflects the
+        # same sorting logic the daily plan uses.
+        pet_tasks = scheduler.sort_by_time(scheduler.filter_by_pet(pet.name))
+        if pet_tasks:
+            st.table(
+                [
+                    {
+                        "Time": f"{t.time:%I:%M %p}",
+                        "Task": t.description,
+                        "Frequency": t.frequency,
+                        "Status": "✅ done" if t.is_complete else "⏳ pending",
+                    }
+                    for t in pet_tasks
+                ]
+            )
         else:
             st.caption("No tasks yet.")
 
@@ -110,18 +122,28 @@ st.caption("Calls Scheduler.generate_daily_plan() for today.")
 if st.button("Generate schedule"):
     scheduler = Scheduler(owner)
     today = date.today()
-    plan = scheduler.generate_daily_plan(today)
+    plan = scheduler.generate_daily_plan(today)  # already filtered + sorted by time
 
     st.markdown(f"#### Today's Schedule — {today:%A, %B %d, %Y}")
     if not plan:
         st.info("Nothing scheduled today. Add some tasks above.")
     else:
-        for t in plan:
-            st.write(f"{t.time:%I:%M %p} — {t.description}")
-
-    conflicts = scheduler.detect_conflicts(plan)
-    if conflicts:
-        st.warning(
-            "Time conflicts detected: "
-            + ", ".join(f"{t.description} @ {t.time:%I:%M %p}" for t in conflicts)
+        # The plan comes back sorted by time; show it as a clean table.
+        st.table(
+            [
+                {
+                    "Time": f"{t.time:%I:%M %p}",
+                    "Task": t.description,
+                    "Status": "✅ done" if t.is_complete else "⏳ pending",
+                }
+                for t in plan
+            ]
         )
+
+        # Surface how much is still pending vs. done for the day.
+        pending = scheduler.filter_by_status(plan)
+        st.success(f"{len(pending)} of {len(plan)} task(s) still pending today.")
+
+    # Let the Scheduler format conflict messages — one warning per clashing slot.
+    for message in scheduler.conflict_warnings(plan):
+        st.warning(message)
