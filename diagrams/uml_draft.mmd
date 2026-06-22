@@ -1,0 +1,52 @@
+classDiagram
+    class Owner {
+        -String name
+        -List~Pet~ pets
+        -Map~String, String~ preferences
+        +addPet(Pet pet) void
+        +removePet(Pet pet) void
+        +getPet(String name) Pet
+        +getAllPets() List~Pet~
+        +getAllTasks() List~Task~
+        +setPreference(String key, String value) void
+        +getPreference(String key) String
+    }
+
+    class Pet {
+        -String name
+        -String species
+        -int age
+        -List~Task~ tasks
+        +addTask(Task task) void
+        +removeTask(Task task) void
+        +getTasks() List~Task~
+        +getInfo() String
+    }
+
+    class Task {
+        -String description
+        -LocalTime time
+        -LocalDate date
+        -String frequency
+        -boolean isComplete
+        +markComplete() void
+        +markIncomplete() void
+        +reschedule(LocalDate date, LocalTime time) void
+        +isDue(LocalDate date) boolean
+    }
+
+    class Scheduler {
+        -Owner owner
+        +generateDailyPlan(LocalDate date) List~Task~
+        +gatherTasks() List~Task~
+        +sortTasks(List~Task~ tasks) List~Task~
+        +filterTasks(List~Task~ tasks, LocalDate date) List~Task~
+        +detectConflicts(List~Task~ tasks) List~Task~
+        +buildSchedule() Map~LocalTime, Task~
+    }
+
+    Owner "1" *-- "0..*" Pet : has
+    Pet "1" *-- "0..*" Task : assigned
+    Scheduler "1" --> "1" Owner : reads from
+    Scheduler ..> Task : organizes
+    Scheduler ..> Pet : gathers from
