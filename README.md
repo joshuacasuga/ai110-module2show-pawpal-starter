@@ -72,14 +72,62 @@ Sample test output:
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
+PawPal+ adds several scheduling behaviors on top of the basic data model. Each
+feature and the method that implements it (all in `pawpal_system.py` unless
+noted) is documented below.
 
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Task sorting | `Scheduler.sort_by_time()` | Orders tasks chronologically (earliest first) |
+| Filtering by completion status | `Scheduler.filter_by_status()` | Returns pending-only or completed-only tasks |
+| Filtering by pet | `Scheduler.filter_by_pet()` | Returns a single pet's tasks (case-insensitive name) |
+| Filtering by date | `Scheduler.filter_tasks()` + `Task.is_due()` | Keeps only tasks due on a given date |
+| Conflict detection | `Scheduler.conflict_warnings()` / `Scheduler.detect_conflicts()` | Flags same-time clashes as non-crashing warnings |
+| Recurring tasks | `Task.next_occurrence()` + `Pet.mark_task_complete()` | Auto-spawns the next daily/weekly instance on completion |
+
+### Sorting behavior — `Scheduler.sort_by_time()`
+
+Uses Python's `sorted()` with a `key=lambda t: t.time` so tasks come back
+ordered by time of day, earliest first. Because `Task.time` is a
+`datetime.time`, it compares chronologically directly — the same result you'd
+get sorting zero-padded `"HH:MM"` strings, which sort lexicographically in
+order. `generate_daily_plan()` and `build_schedule()` both rely on it.
+
+### Filtering behavior
+
+- **`Scheduler.filter_by_status(tasks, is_complete=False)`** — keeps only tasks
+  whose `is_complete` matches the argument. Defaults to pending tasks (what the
+  owner still has left to do).
+- **`Scheduler.filter_by_pet(pet_name)`** — returns all tasks for one pet,
+  looked up case-insensitively through the owner; returns an empty list if no
+  pet matches.
+- **`Scheduler.filter_tasks(tasks, on_date)`** — keeps only tasks due on a given
+  date, delegating the recurrence rules to `Task.is_due()`.
+
+### Conflict detection — `Scheduler.conflict_warnings()`
+
+A lightweight strategy that **warns rather than crashes**. It groups all
+gathered tasks (same pet *or* different pets) by start time and returns one
+human-readable warning string per clashing slot, e.g.
+`[!] Conflict at 12:00 PM: 2 tasks overlap - Lunch, Litter cleanup`. It returns
+an empty list when there are no conflicts, so callers can simply check
+`if warnings:`. The lower-level `detect_conflicts()` returns the colliding
+`Task` objects themselves (used by the Streamlit UI in `app.py`). Current
+limitation: only exact start-time matches are detected, not overlapping
+durations — see `reflection.md` §2b.
+
+### Recurring task logic — `Task.next_occurrence()` + `Pet.mark_task_complete()`
+
+When a recurring task is completed, the next instance is created automatically:
+
+- **`Task.next_occurrence()`** computes a fresh, incomplete `Task` for the next
+  date using `timedelta` — `+1 day` for `"daily"`, `+7 days` for `"weekly"`.
+  `timedelta` rolls over month/year boundaries accurately (e.g. Dec 31 + 1 day
+  → Jan 1). Non-recurring frequencies (`"monthly"`, `"once"`) return `None`.
+- **`Pet.mark_task_complete(task)`** marks the task done and, if
+  `next_occurrence()` produced one, attaches it to the pet's task list and
+  returns it. The recurrence lives on `Pet` because that's where the task list
+  lives — a `Task` has no back-reference to its pet.
 
 ## 📸 Demo Walkthrough
 

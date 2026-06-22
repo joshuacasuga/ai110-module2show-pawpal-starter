@@ -23,8 +23,25 @@ My design has four classes. The Owner holds the user's pets and their preference
 
 **b. Tradeoffs**
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+My scheduler detects conflicts only by **exact start-time matches**, not by
+overlapping durations. `detect_conflicts`/`conflict_warnings` bucket tasks by
+their `time` value and warn when two or more land in the same slot. This means
+a 7:30 AM walk that realistically takes 45 minutes and an 8:00 AM feeding are
+*not* flagged, even though one human can't do both — because their start times
+differ. To catch that, a `Task` would need a `duration` and the check would
+compare `[start, start + duration)` ranges for overlap.
+
+This tradeoff is reasonable for the current scenario because tasks don't yet
+store a duration, exact-match detection is simple and fast (one pass, O(n)),
+and it already catches the most common and most obvious mistake — booking two
+care tasks at the literally identical time. It keeps the warning logic easy to
+read and verify now, while leaving a clear path to upgrade to duration-aware
+overlap detection later.
+
+A second, related tradeoff: conflicts are reported as **non-blocking warnings**
+rather than errors. The schedule still prints in full; the owner is simply told
+which slots clash and decides what to do. This favors the owner's judgment over
+having the program refuse to build a plan.
 
 ---
 
