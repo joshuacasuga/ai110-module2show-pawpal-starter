@@ -1,11 +1,11 @@
 # PawPal+ Project Reflection
 
 ## 1. System Design
+User should be able to add pets, schedule tasks for pets, see all tasks for each pet that day.
 
 **a. Initial design**
 
-- Briefly describe your initial UML design.
-- What classes did you include, and what responsibilities did you assign to each?
+My design has four classes. The Owner holds the user's pets and their preferences, and is in charge of adding or removing pets and pulling together tasks from all of them. Each Pet stores its own basic info like name, species, and age, along with the list of care tasks that belong to it. A Task represents one care activity such as feeding or walking, and it keeps track of its description, time, date, how often it repeats, and whether it's done yet. The Scheduler is the piece that actually builds the daily plan. It gathers the tasks from all the pets, sorts and filters them, checks for simple conflicts, and lays everything out into a schedule the owner can follow.
 
 **b. Design changes**
 
